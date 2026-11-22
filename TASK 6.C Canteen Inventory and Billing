@@ -1,0 +1,146 @@
+    {
+        Combo *c = &item->detail.combo;
+
+        for (int i = 0; i < c->count; i++)
+        {
+            Item *part = find_item(items, n, c->componentId[i]);
+            if (part == NULL || part->stock < c->quantity[i] * quantity)
+                return 0;
+        }
+
+        for (int i = 0; i < c->count; i++)
+        {
+            Item *part = find_item(items, n, c->componentId[i]);
+            part->stock -= c->quantity[i] * quantity;
+        }
+    }
+    else
+    {
+        if (item->stock < quantity)
+            return 0;
+        item->stock -= quantity;
+    }
+
+    item->revenue += item->price * quantity;
+    return 1;
+}
+
+void expiry_warning(const Item items[], int n, Date today)
+{
+    printf("Expiry warnings (within 2 days):\n");
+    for (int i = 0; i < n; i++)
+    {
+        if (items[i].type == PACKAGED)
+        {
+            int remaining = date_value(items[i].detail.expiry) -
+                            date_value(today);
+            if (remaining >= 0 && remaining <= 2)
+                printf("%s expires in %d day(s)\n",
+                       items[i].name, remaining);
+        }
+    }
+}
+
+void print_revenue_summary(const Item items[], int n)
+{
+    int order[MAX_ITEMS], temp;
+
+    for (int i = 0; i < n; i++)
+        order[i] = i;
+
+    for (int i = 0; i < n - 1; i++)
+        for (int j = 0; j < n - i - 1; j++)
+            if (items[order[j]].revenue <
+                items[order[j + 1]].revenue)
+            {
+                temp = order[j];
+                order[j] = order[j + 1];
+                order[j + 1] = temp;
+            }
+
+    printf("\nDay bill summary (revenue descending):\n");
+    for (int i = 0; i < n; i++)
+        printf("%s : Rs. %.2f\n",
+               items[order[i]].name, items[order[i]].revenue);
+}
+
+int main(void)
+{
+    Date today = {22, 11, 2026};
+    Item items[3] = {
+        {1, "Juice", PACKAGED, 30.0f, 5, 0.0f,
+         {.expiry = {23, 11, 2026}}},
+        {2, "Sandwich", COOKED, 50.0f, 2, 0.0f,
+         {.prepared = {9, 30}}},
+        {3, "ComboMeal", COMBO, 70.0f, 0, 0.0f,
+         {.combo = {{1, 2, 0}, {1, 1, 0}, 2}}}
+    };
+
+    printf("Normal sale: ");
+    if (record_sale(items, 3, 1, 2))
+        printf("2 Juice sold\n");
+    else
+        printf("Sale rejected\n");
+
+    printf("Excess-stock sale: ");
+    if (record_sale(items, 3, 2, 99))
+        printf("accepted\n");
+    else
+        printf("rejected - insufficient stock\n");
+
+    printf("Combo sale: ");
+    if (record_sale(items, 3, 3, 1))
+        printf("1 ComboMeal sold\n");
+    else
+        printf("rejected - insufficient component stock\n");
+
+    printf("Remaining Juice stock: %d\n", items[0].stock);
+    printf("Remaining Sandwich stock: %d\n", items[1].stock);
+
+    printf("\n");
+    expiry_warning(items, 3, today);
+    print_revenue_summary(items, 3);
+    return 0;
+}
+PSEUDOCODE – RECORD A SALE
+1. Find the item using its ID.
+2. If the item does not exist or quantity is not positive, reject the sale.
+3. If the item is a combo:
+   a. Check stock for every component multiplied by the requested quantity.
+   b. If any component has insufficient stock, reject without changing stock.
+   c. Otherwise deduct all component quantities.
+4. If the item is packaged or cooked:
+   a. Check whether stock is sufficient.
+   b. If not, reject the sale.
+   c. Otherwise deduct the requested quantity.
+5. Add price multiplied by quantity to that item's revenue.
+6. Confirm the sale.
+
+PSEUDOCODE – EXPIRY WARNING
+1. Receive today's date.
+2. Examine each inventory item.
+3. For packaged items, calculate the number of days between today and expiry.
+4. If expiry is from today through two days from today, print a warning.
+
+PSEUDOCODE – BILL SUMMARY
+1. Create an array of item indices.
+2. Sort the indices by revenue in descending order.
+3. Print each item and its revenue in that order.
+
+DATA MODEL
+- Date: day, month, year.
+- Time: hour, minute.
+- Combo: up to three component item IDs and quantities.
+- Item: ID, name, type tag, price, stock, revenue and a tagged union.
+- The union stores expiry Date, prepared Time or Combo data according to the item type.
+
+TEST CASES INCLUDED
+1. Normal sale: sell two Juice items.
+2. Insufficient-stock sale: attempt to sell 99 Sandwiches; reject and do not change stock.
+3. Combo sale: sell one ComboMeal and deduct its component stock.
+4. Expiry warning: Juice expires within two days.
+5. Revenue summary: sort item revenue from highest to lowest.
+
+ALTERNATIVE – LINKED LIST
+A linked list allows insertion and deletion at a known node in O(1), but finding an item by ID remains O(n). An array allows O(1) indexed access but searching by ID is O(n); insertion/deletion may require shifting elements. Each linked-list node uses extra memory for a next pointer. For a small fixed inventory, an array is simpler; for frequently changing inventory, a linked list may be useful.
+//SCREENSHOT:sandbox:/mnt/data/CO4_Assignment4_Package/Task06/task06_output.png
