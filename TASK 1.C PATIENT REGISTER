@@ -1,0 +1,82 @@
+#include <stdio.h>
+#include <string.h>
+
+typedef struct {
+    int day, month, year;
+} Date;
+
+typedef struct {
+    int systolic;
+    int diastolic;
+} BloodPressure;
+
+typedef struct {
+    char name[30];
+    int age;
+    char phone[11];       /* 10 digits plus null terminator */
+    BloodPressure bp;     /* nested structure */
+    Date visitDate;       /* nested structure */
+} Patient;
+
+void addPatient(Patient *p, const char *name, int age,
+                const char *phone, BloodPressure bp, Date date)
+{
+    if (p == NULL || name == NULL || phone == NULL)
+        return;
+
+    snprintf(p->name, sizeof p->name, "%s", name);
+    p->age = age;
+    snprintf(p->phone, sizeof p->phone, "%s", phone);
+    p->bp = bp;
+    p->visitDate = date;
+}
+
+void printPatient(const Patient *p)
+{
+    printf("Name: %s\n", p->name);
+    printf("Age: %d\n", p->age);
+    printf("Phone: %s\n", p->phone);
+    printf("Blood pressure: %d/%d\n",
+           p->bp.systolic, p->bp.diastolic);
+    printf("Visit date: %02d/%02d/%04d\n",
+           p->visitDate.day, p->visitDate.month,
+           p->visitDate.year);
+}
+
+int main(void)
+{
+    Patient patients[100];
+    int count = 0;
+    BloodPressure bp = {120, 80};
+    Date visit = {22, 11, 2026};
+
+    addPatient(&patients[count], "Anitha", 35,
+               "9876543210", bp, visit);
+    count++;
+
+    printf("Patient register (%d record)\n\n", count);
+    printPatient(&patients[0]);
+    return 0;
+}
+PSEUDOCODE
+1. Define Date with day, month and year.
+2. Define BloodPressure with systolic and diastolic values.
+3. Define Patient with name, age, phone, BloodPressure and Date.
+4. Create an array of Patient structures and initialize count to zero.
+5. To add a patient:
+   a. Receive a pointer to a Patient and the patient details.
+   b. Copy the name and phone into the structure fields.
+   c. Assign age, blood pressure and visit date.
+6. Increase count after a successful insertion.
+7. Print the patient's details using the nested structure fields.
+
+DESIGN DIAGNOSIS – DEFICIENCIES IN THE ORIGINAL PARALLEL ARRAYS
+1. Parallel arrays can become misaligned if an element is inserted or deleted in only one array.
+2. char phone[100][10] cannot store 10 digits plus the terminating '\0'; use char[11].
+3. One float cannot represent both systolic and diastolic blood-pressure values.
+4. A date stored as text is harder to validate and compare than day/month/year integer fields.
+5. No capacity check can write beyond the 100 available records.
+6. Global arrays and count make data changes less controlled and harder to test.
+7. Sorting patients requires moving corresponding elements in every parallel array.
+
+SCREESHOT:sandbox:/mnt/data/CO4_Assignment4_Package/Task01/task01_output.png
