@@ -1,0 +1,88 @@
+#include <stdio.h>
+
+/* Defined in token_counter.c and shared through external linkage. */
+extern int shared_token;
+
+/* Issues the next token using a static local variable. */
+int next_token(void)
+{
+    static int token = 1000;
+    return ++token;
+}
+
+/* Automatic variable: reinitialized on every call. */
+int auto_token(void)
+{
+    int token = 1000;
+    return ++token;
+}
+
+/* Uses the global variable defined in token_counter.c. */
+int extern_token(void)
+{
+    return ++shared_token;
+}
+
+int main(void)
+{
+    int s1 = next_token();
+    int s2 = next_token();
+    int s3 = next_token();
+
+    int a1 = auto_token();
+    int a2 = auto_token();
+    int a3 = auto_token();
+
+    int e1 = extern_token();
+    int e2 = extern_token();
+    int e3 = extern_token();
+
+    printf("static: %d %d %d\n", s1, s2, s3);
+    printf("auto  : %d %d %d\n", a1, a2, a3);
+    printf("extern: %d %d %d\n", e1, e2, e3);
+
+    printf("register loop: ");
+    for (register int i = 1; i <= 3; i++)
+        printf("%d ", i);
+    printf("\n");
+
+    return 0;
+}
+int shared_token = 1000;
+//SCREENSHOT:PSEUDOCODE – STATIC TOKEN COUNTER
+1. Declare a local static token and initialize it to 1000 only once.
+2. Increment token.
+3. Return token.
+4. Each later call continues from the previous value.
+
+PSEUDOCODE – AUTOMATIC TOKEN COUNTER
+1. On each function call, create a local automatic token initialized to 1000.
+2. Increment token and return it.
+3. The next call creates a fresh token initialized to 1000 again.
+
+PSEUDOCODE – EXTERN / GLOBAL COUNTER
+1. In token_counter.c, define shared_token and initialize it to 1000.
+2. In task05_storage_classes.c, declare shared_token with extern.
+3. Increment and return the shared variable.
+4. Compile and link both source files together.
+
+PSEUDOCODE – REGISTER LOOP VARIABLE
+1. Declare the loop counter with register in the printing loop.
+2. Print the counter while it is within the loop range.
+3. The compiler may treat register as a hint; the program must not take its address.
+
+EXPECTED OUTPUT
+static: 1001 1002 1003
+auto  : 1001 1001 1001
+extern: 1001 1002 1003
+register loop: 1 2 3
+
+STORAGE CLASS COMPARISON
+- auto: block scope, automatic lifetime, indeterminate initial value unless initialized, recreated on each call.
+- static local: block scope, entire program lifetime, initialized once and retains its value.
+- extern/global: external linkage for a shared definition, entire program lifetime, zero-initialized if not explicitly initialized.
+- register: block scope and automatic lifetime; register is only a hint and its address cannot be taken with &.
+
+TWO INDEPENDENT COUNTERS
+Keep two separate static variables, two separate globals, or two caller-owned integers passed by pointer. Caller-owned counters are easiest to keep independent without hidden shared state.
+//SCREENShot:sandbox:/mnt/data/CO4_Assignment4_Package/Task05/task05_output.png
