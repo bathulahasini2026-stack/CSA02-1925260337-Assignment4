@@ -1,0 +1,72 @@
+#include <stdio.h>
+
+enum kind { TEMPERATURE, HUMIDITY, STATUS };
+
+struct reading {
+    enum kind type;
+    union {
+        float celsius;
+        int percent;
+        char status[8];
+    } value;
+};
+
+void show(const struct reading *r)
+{
+    switch (r->type)
+    {
+        case TEMPERATURE:
+            printf("Temp %.1f C\n", r->value.celsius);
+            break;
+        case HUMIDITY:
+            printf("Humidity %d %%\n", r->value.percent);
+            break;
+        case STATUS:
+            printf("Status %s\n", r->value.status);
+            break;
+        default:
+            printf("Unknown reading\n");
+    }
+}
+
+int main(void)
+{
+    struct reading log[3] = {
+        {TEMPERATURE, {.celsius = 31.5f}},
+        {HUMIDITY, {.percent = 68}},
+        {STATUS, {.status = "OK"}}
+    };
+
+    printf("sizeof union = %zu, sizeof struct reading = %zu\n",
+           sizeof log[0].value, sizeof log[0]);
+
+    for (int i = 0; i < 3; i++)
+        show(&log[i]);
+
+    return 0;
+}
+PSEUDOCODE – DISPLAY A TAGGED UNION
+1. Receive a pointer to a Reading structure.
+2. Examine the type tag.
+3. If the tag is TEMPERATURE, print the celsius member.
+4. If the tag is HUMIDITY, print the percent member.
+5. If the tag is STATUS, print the status text.
+6. For an unknown tag, print an error message.
+
+MEMORY DESIGN
+- A structure containing all three independent fields reserves space for all members.
+- A tagged union stores a tag plus one shared memory area large enough for its largest member.
+- The tag identifies which union member is currently valid.
+- The union size is determined by its largest member plus any alignment requirements.
+- On the assignment's typical 64-bit GCC setup, expected output is union = 8 bytes and struct reading = 12 bytes.
+
+EXPECTED OUTPUT
+sizeof union = 8, sizeof struct reading = 12
+Temp 31.5 C
+Humidity 68 %
+Status OK
+
+MISUSE EXPERIMENT
+If a temperature is written and the humidity member is then read, the result is not a meaningful humidity value. The same memory is being interpreted as a different type. Always check the tag before reading a union member.
+
+//SCREENSHOT:sandbox:/mnt/data/CO4_Assignment4_Package/Task03/task03_output.png
