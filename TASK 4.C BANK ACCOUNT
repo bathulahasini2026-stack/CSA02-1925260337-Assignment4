@@ -1,0 +1,62 @@
+#include <stdio.h>
+
+struct account {
+    int number;
+    float balance;
+};
+
+/* Demonstrates pass-by-value: a is a local copy. */
+void addInterest_copy(struct account a, float rate)
+{
+    printf("Address inside pass-by-value function: %p\n", (void *)&a);
+    a.balance = a.balance + a.balance * rate / 100.0f;
+}
+
+/* Correct version: modify the original using a structure pointer. */
+void addInterest(struct account *a, float rate)
+{
+    if (a != NULL)
+        a->balance = a->balance + a->balance * rate / 100.0f;
+}
+
+int main(void)
+{
+    struct account list[3] = {
+        {101, 5000.0f}, {102, 12000.0f}, {103, 800.0f}
+    };
+    struct account *p = list;
+
+    printf("Address in main: %p\n", (void *)&list[0]);
+    addInterest_copy(list[0], 4.0f);
+    printf("Balance after pass-by-value: %.2f\n", list[0].balance);
+
+    for (int i = 0; i < 3; i++)
+        addInterest(&list[i], 4.0f);
+
+    printf("\nUpdated account balances:\n");
+    for (int i = 0; i < 3; i++)
+        printf("%d %.2f\n", p[i].number, p[i].balance);
+
+    printf("First account using pointer: %d %.2f\n",
+           p->number, p->balance);
+    return 0;
+}
+PSEUDOCODE – REPAIR USING A STRUCTURE POINTER
+1. Define Account with account number and balance.
+2. Define addInterest to receive a pointer to Account and a rate.
+3. If the pointer is not null:
+   a. Access the balance using the arrow operator.
+   b. Add balance * rate / 100 to the balance.
+4. In main, create an array of accounts and a pointer to its first element.
+5. Call addInterest with the address of each account.
+6. Display all updated balances using the pointer.
+
+DEFECTS IN THE ORIGINAL
+1. Passing a structure by value creates a copy, so modifying the copy does not update the original array element.
+2. p is a pointer, so p.number and p.balance are invalid. Use p->number and p->balance, or (*p).number and (*p).balance.
+
+PASSING GUIDELINE
+- Pass by value for small structures when a copy is wanted.
+- Pass by pointer when a function must modify the original structure or avoid a large copy.
+- Pass by const pointer when the function only reads a structure and should not modify it.
+//SCREENSHOT:sandbox:/mnt/data/CO4_Assignment4_Package/Task04/task04_output.png
