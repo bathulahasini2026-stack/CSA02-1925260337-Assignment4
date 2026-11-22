@@ -1,0 +1,108 @@
+#include <stdio.h>
+#include <string.h>
+
+struct date { int day, month, year; };
+struct address { char city[20]; int pincode; };
+struct parcel {
+    int id;
+    float weight;
+    struct address to;
+    struct date booked;
+};
+
+void print_parcel(const struct parcel *p)
+{
+    printf("%d %.1f kg %s-%d %02d/%02d/%04d\n",
+           p->id, p->weight, p->to.city, p->to.pincode,
+           p->booked.day, p->booked.month, p->booked.year);
+}
+
+/* Selection sort in ascending order of weight. */
+void sort_by_weight(struct parcel p[], int n)
+{
+    int i, j, minIndex;
+    struct parcel temp;
+
+    for (i = 0; i < n - 1; i++)
+    {
+        minIndex = i;
+        for (j = i + 1; j < n; j++)
+        {
+            if (p[j].weight < p[minIndex].weight)
+                minIndex = j;
+        }
+
+        if (minIndex != i)
+        {
+            temp = p[i];
+            p[i] = p[minIndex];
+            p[minIndex] = temp;
+        }
+    }
+}
+
+void list_by_receiver_city(const struct parcel p[], int n,
+                           const char city[])
+{
+    int i;
+    printf("Parcels for %s:\n", city);
+    for (i = 0; i < n; i++)
+    {
+        if (strcmp(p[i].to.city, city) == 0)
+            print_parcel(&p[i]);
+    }
+}
+
+int main(void)
+{
+    struct parcel list[3] = {
+        {501, 4.5f, {"Madurai", 625001}, {12, 10, 2026}},
+        {502, 1.2f, {"Chennai", 600077}, {12, 10, 2026}},
+        {503, 2.8f, {"Coimbatore", 641001}, {13, 10, 2026}}
+    };
+
+    sort_by_weight(list, 3);
+    for (int i = 0; i < 3; i++)
+        print_parcel(&list[i]);
+
+    list_by_receiver_city(list, 3, "Chennai");
+
+    printf("Third parcel receiver PIN (array/dot): %d\n",
+           list[2].to.pincode);
+    {
+        struct parcel *ptr = &list[2];
+        printf("Third parcel receiver PIN (pointer/arrow): %d\n",
+               ptr->to.pincode);
+    }
+    return 0;
+}
+PSEUDOCODE – SORT PARCELS BY WEIGHT (SELECTION SORT)
+1. For each position i from 0 to n-2:
+   a. Assume i is the index of the lightest remaining parcel.
+   b. Scan positions i+1 through n-1.
+   c. If a lighter parcel is found, update minIndex.
+   d. Swap the complete parcel structures at i and minIndex.
+2. The array is now in ascending order of weight.
+
+PSEUDOCODE – LIST PARCELS FOR A RECEIVER CITY
+1. Read or receive the required city.
+2. For each parcel in the array:
+   a. Compare parcel.receiver.city with the required city.
+   b. If equal, print that parcel.
+
+STRUCTURE / ENTITY MODEL
+- Date: day, month, year.
+- Address: city, pincode.
+- Parcel: id, weight, receiver address, booking date.
+- Address and Date are nested inside Parcel.
+
+ACCESS EXPRESSIONS
+(i) Array and dot: list[2].to.pincode
+(ii) Pointer and arrow: ptr->to.pincode
+
+EXPECTED OUTPUT – REQUIRED TODO PROGRAM
+502 1.2 kg Chennai-600077 12/10/2026
+503 2.8 kg Coimbatore-641001 13/10/2026
+501 4.5 kg Madurai-625001 12/10/2026
+
+SCREENSHOT:sandbox:/mnt/data/CO4_Assignment4_Package/Task02/task02_output.png
